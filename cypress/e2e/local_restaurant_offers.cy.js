@@ -1,66 +1,34 @@
-const searchConfig = {
-  query: "local restaurants",
-  location: "London",
-  people: 4
-};
-
-const acceptCookiesIfPresent = () => {
-  cy.get("body").then(($body) => {
-    const buttons = $body.find("button, a");
-    const acceptButton = Array.from(buttons).find((el) => {
-      const text = (el.textContent || "").toLowerCase();
-      return text.includes("accept") && text.includes("cookie");
-    });
-
-    if (acceptButton) {
-      cy.wrap(acceptButton).click({ force: true });
-    }
-  });
-};
-
-const typeIfExists = (selectorList, value) => {
-  const selectors = selectorList.split(",").map((s) => s.trim());
-  cy.get("body").then(($body) => {
-    const found = selectors.find((selector) => $body.find(selector).length > 0);
-    if (found) {
-      cy.get(found).first().clear({ force: true }).type(value, { force: true });
-    } else {
-      cy.log(`No matching field for: ${selectorList}`);
-    }
-  });
-};
-
 describe("Local restaurant offer search", () => {
-  it("successfully searches for local restaurant offers in London for a given party size", () => {
+  it("searches for local restaurant offers in London for a given party size", () => {
+    const people = 4;
+
     cy.visit("/");
-    acceptCookiesIfPresent();
 
-    typeIfExists(
-      'input[type="search"], input[placeholder*="Search" i], input[name*="search" i]',
-      `${searchConfig.query}{enter}`
-    );
+    // If a cookie banner appears, accept it.
+    cy.contains(/accept.*cookie/i).click({ force: true });
 
-    typeIfExists(
-      'input[placeholder*="location" i], input[name*="location" i], input[placeholder*="postcode" i]',
-      `${searchConfig.location}{enter}`
-    );
+    // Search for local restaurant offers.
+    cy.get('input[type="search"]').type("local restaurants{enter}");
 
-    typeIfExists(
-      'input[placeholder*="people" i], input[name*="people" i], input[placeholder*="guests" i]',
-      `${searchConfig.people}`
-    );
+    // Enter London as the location (if a location box exists on the page).
+    cy.get('input[placeholder*="location" i], input[name*="location" i]').first().type("London{enter}");
 
-    cy.contains(/restaurant/i, { timeout: 15000 }).should("be.visible");
-    cy.contains(new RegExp(searchConfig.location, "i"), { timeout: 15000 }).should("be.visible");
+    // Enter the number of people (if a party size box exists on the page).
+    cy.get('input[placeholder*="people" i], input[name*="people" i], input[placeholder*="guests" i]')
+      .first()
+      .type(String(people));
+
+    // Basic checks to confirm results mention restaurants and London.
+    cy.contains(/restaurant/i).should("be.visible");
+    cy.contains(/london/i).should("be.visible");
   });
 
-  it("intentionally fails to capture debug artifacts", () => {
+  it("fails on purpose to collect debug artifacts", () => {
     cy.visit("/");
-    acceptCookiesIfPresent();
 
-    cy.log("Triggering intentional failure for debugging artifacts");
-    cy.screenshot("intentional-failure-before-assert");
+    cy.screenshot("intentional-failure");
 
-    cy.get("[data-test-id='this-does-not-exist']", { timeout: 5000 }).should("exist");
+    // This selector does not exist, so the test will fail.
+    cy.get("[data-test-id='does-not-exist']").should("exist");
   });
 });
