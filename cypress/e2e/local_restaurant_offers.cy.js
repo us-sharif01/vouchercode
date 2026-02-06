@@ -1,26 +1,26 @@
 describe("Local restaurant offer search", () => {
-  it("searches for local restaurant offers in London for a given party size", () => {
-    const people = 4;
-
+  it("searches for local restaurant offers in London", () => {
     cy.visit("/");
 
-    // If a cookie banner appears, accept it.
-    cy.contains(/accept.*cookie/i).click({ force: true });
+    // Accept cookies if the banner appears.
+    cy.contains("Accept", { matchCase: false }).click({ force: true });
 
-    // Search for local restaurant offers.
+    // Search for local restaurants.
     cy.get('input[type="search"]').type("local restaurants{enter}");
 
-    // Enter London as the location (if a location box exists on the page).
-    cy.get('input[placeholder*="location" i], input[name*="location" i]').first().type("London{enter}");
+    // Enter London as the location.
+    cy.get('input[placeholder*="location" i], input[name*="location" i]')
+      .first()
+      .type("London{enter}");
 
-    // Enter the number of people (if a party size box exists on the page).
+    // Enter party size (number of people).
     cy.get('input[placeholder*="people" i], input[name*="people" i], input[placeholder*="guests" i]')
       .first()
-      .type(String(people));
+      .type("4");
 
-    // Basic checks to confirm results mention restaurants and London.
-    cy.contains(/restaurant/i).should("be.visible");
-    cy.contains(/london/i).should("be.visible");
+    // Check that the page shows restaurant results and London.
+    cy.contains("restaurant", { matchCase: false }).should("be.visible");
+    cy.contains("London").should("be.visible");
   });
 
   it("fails on purpose to collect debug artifacts", () => {
